@@ -1,0 +1,25 @@
+syntax = "proto3";
+package pingometr.v1;
+option go_package = "./proto;";
+
+service PingOmetr {
+  rpc GetFastest (GetFastestRequest) returns (GetResponse);
+  rpc GetSlowest (GetSlowestRequest) returns (GetResponse);
+  rpc GetSpecific (GetSpecificRequest) returns (GetResponse);
+}
+
+message GetFastestRequest {
+}
+
+message GetSlowestRequest {
+}
+
+message GetSpecificRequest {
+  string siteName = 1;
+}
+
+message GetResponse {
+  int32 ping = 1;
+  string error = 2;
+}
+
