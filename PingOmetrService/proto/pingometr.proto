@@ -1,11 +1,12 @@
 syntax = "proto3";
-package pingometr.v1;
+package v1;
 option go_package = "./proto;";
 
 service PingOmetr {
   rpc GetFastest (GetFastestRequest) returns (GetResponse);
   rpc GetSlowest (GetSlowestRequest) returns (GetResponse);
   rpc GetSpecific (GetSpecificRequest) returns (GetResponse);
+  rpc GetAdminData (GetAdminDataRequest) returns (GetAdminDataResponse);
 }
 
 message GetFastestRequest {
@@ -19,7 +20,26 @@ message GetSpecificRequest {
 }
 
 message GetResponse {
-  int32 ping = 1;
-  string error = 2;
+  PingUser response = 1;
 }
 
+message PingUser {
+  int32 ping = 1;
+  string site = 2;
+  string error = 3;
+}
+
+message GetAdminDataRequest {}
+
+message GetAdminDataResponse{
+  repeated PingAdmin data = 1;
+}
+
+message PingAdmin{
+  int32 ping = 1;
+  string site = 2;
+  string error = 3;
+  int32 nErrors = 4;
+  int32 nMax = 5;
+  int32 nMin = 6;
+}

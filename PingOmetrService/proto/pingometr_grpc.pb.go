@@ -25,6 +25,7 @@ type PingOmetrClient interface {
 	GetFastest(ctx context.Context, in *GetFastestRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetSlowest(ctx context.Context, in *GetSlowestRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetSpecific(ctx context.Context, in *GetSpecificRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetAdminData(ctx context.Context, in *GetAdminDataRequest, opts ...grpc.CallOption) (*GetAdminDataResponse, error)
 }
 
 type pingOmetrClient struct {
@@ -37,7 +38,7 @@ func NewPingOmetrClient(cc grpc.ClientConnInterface) PingOmetrClient {
 
 func (c *pingOmetrClient) GetFastest(ctx context.Context, in *GetFastestRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/pingometr.v1.PingOmetr/GetFastest", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v1.PingOmetr/GetFastest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +47,7 @@ func (c *pingOmetrClient) GetFastest(ctx context.Context, in *GetFastestRequest,
 
 func (c *pingOmetrClient) GetSlowest(ctx context.Context, in *GetSlowestRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/pingometr.v1.PingOmetr/GetSlowest", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v1.PingOmetr/GetSlowest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,16 @@ func (c *pingOmetrClient) GetSlowest(ctx context.Context, in *GetSlowestRequest,
 
 func (c *pingOmetrClient) GetSpecific(ctx context.Context, in *GetSpecificRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/pingometr.v1.PingOmetr/GetSpecific", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v1.PingOmetr/GetSpecific", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pingOmetrClient) GetAdminData(ctx context.Context, in *GetAdminDataRequest, opts ...grpc.CallOption) (*GetAdminDataResponse, error) {
+	out := new(GetAdminDataResponse)
+	err := c.cc.Invoke(ctx, "/v1.PingOmetr/GetAdminData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +79,7 @@ type PingOmetrServer interface {
 	GetFastest(context.Context, *GetFastestRequest) (*GetResponse, error)
 	GetSlowest(context.Context, *GetSlowestRequest) (*GetResponse, error)
 	GetSpecific(context.Context, *GetSpecificRequest) (*GetResponse, error)
+	GetAdminData(context.Context, *GetAdminDataRequest) (*GetAdminDataResponse, error)
 	mustEmbedUnimplementedPingOmetrServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedPingOmetrServer) GetSlowest(context.Context, *GetSlowestReque
 }
 func (UnimplementedPingOmetrServer) GetSpecific(context.Context, *GetSpecificRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSpecific not implemented")
+}
+func (UnimplementedPingOmetrServer) GetAdminData(context.Context, *GetAdminDataRequest) (*GetAdminDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAdminData not implemented")
 }
 func (UnimplementedPingOmetrServer) mustEmbedUnimplementedPingOmetrServer() {}
 
@@ -108,7 +122,7 @@ func _PingOmetr_GetFastest_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pingometr.v1.PingOmetr/GetFastest",
+		FullMethod: "/v1.PingOmetr/GetFastest",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PingOmetrServer).GetFastest(ctx, req.(*GetFastestRequest))
@@ -126,7 +140,7 @@ func _PingOmetr_GetSlowest_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pingometr.v1.PingOmetr/GetSlowest",
+		FullMethod: "/v1.PingOmetr/GetSlowest",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PingOmetrServer).GetSlowest(ctx, req.(*GetSlowestRequest))
@@ -144,10 +158,28 @@ func _PingOmetr_GetSpecific_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pingometr.v1.PingOmetr/GetSpecific",
+		FullMethod: "/v1.PingOmetr/GetSpecific",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PingOmetrServer).GetSpecific(ctx, req.(*GetSpecificRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PingOmetr_GetAdminData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAdminDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PingOmetrServer).GetAdminData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.PingOmetr/GetAdminData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PingOmetrServer).GetAdminData(ctx, req.(*GetAdminDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -156,7 +188,7 @@ func _PingOmetr_GetSpecific_Handler(srv interface{}, ctx context.Context, dec fu
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PingOmetr_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pingometr.v1.PingOmetr",
+	ServiceName: "v1.PingOmetr",
 	HandlerType: (*PingOmetrServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -170,6 +202,10 @@ var PingOmetr_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSpecific",
 			Handler:    _PingOmetr_GetSpecific_Handler,
+		},
+		{
+			MethodName: "GetAdminData",
+			Handler:    _PingOmetr_GetAdminData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

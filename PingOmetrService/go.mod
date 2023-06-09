@@ -1,4 +1,4 @@
-module github.com/Michael-Levitin/PingOmetr
+module github.com/Michael-Levitin/PingOmetr/PingOmetrService
 
 go 1.18
 
