@@ -17,7 +17,10 @@ import (
 
 var re = regexp.MustCompile(`time=(\d+).+`)
 
-const adminDataUpdateCooldown = 600 // seconds
+const (
+	adminDataUpdateCoolDown = 600 // seconds
+	userDataUpdateCoolDown  = 60  // seconds
+)
 
 type PingLogic struct {
 	db *PingsData // TODO - change to db
@@ -35,32 +38,25 @@ type PingsData struct {
 // NewPingLogic() создаем новую логику, подключаем список сайтов, обновление пингов/админа, ...
 func NewPingLogic() (*PingLogic, error) {
 	var err error
-	//log.Print("started new logic")
 	db := PingsData{wg: &sync.WaitGroup{}, lock: sync.RWMutex{}}
 
 	err = db.setSites()
 	if err != nil {
 		return nil, err
 	}
-	//log.Print("logic: opened sites file")
-
-	log.Print("logic: updating initial ping data ...")
-	db.wg.Add(1)
-	err = db.updateUserData()
-	if err != nil {
-		return nil, err
-	}
-	db.wg.Wait()
-	log.Print("logic: done")
-
 	err = db.setAdminData()
 	if err != nil {
 		return nil, err
 	}
 
-	//db.wg.Wait()
+	log.Print("logic: updating initial ping data ...")
+	db.wg.Add(1)
+	db.updateUserData()
+	db.wg.Wait()
+	log.Print("logic: done")
 
 	go db.updateAdminDataDB() // периодическое обновление данных для админов, на диске
+	go db.setUserData()       // периодическое обновление данных ping
 
 	return &PingLogic{&db}, nil
 }
@@ -114,11 +110,9 @@ func (d *PingsData) setSites() error {
 	return nil
 }
 
-func (d *PingsData) updateUserData() error {
-	d.setUserData()
+func (d *PingsData) updateUserData() {
+	d.setUserDataOnce()
 	d.wg.Done()
-	//go d.setUserData()
-	return nil
 }
 
 func (d *PingsData) setAdminData() error {
@@ -151,7 +145,7 @@ func (d *PingsData) setAdminData() error {
 
 func (d *PingsData) updateAdminDataDB() {
 	for {
-		time.Sleep(time.Second * adminDataUpdateCooldown)
+		time.Sleep(time.Second * adminDataUpdateCoolDown)
 		d1 := []byte(fmt.Sprintf("%d %d %d", d.admin.Max, d.admin.Min, d.admin.Specific))
 		err := os.WriteFile("./../../internal/logic/db/admin.txt", d1, 0644)
 		if err != nil {
@@ -169,15 +163,23 @@ func (d *PingsData) resetAdminDataDB() error {
 	return nil
 }
 
-func (d *PingsData) setUserData() {
-	//fmt.Println("len(d.data)", len(d.data))
+func (d *PingsData) setUserDataOnce() {
 	d.wg.Add(len(d.data))
 	for site := range d.data {
-		go d.ping(site)
+		go d.ping(site, true)
 	}
 }
 
-func (d *PingsData) ping(url string) {
+func (d *PingsData) setUserData() {
+	for {
+		time.Sleep(time.Second * userDataUpdateCoolDown)
+		for site := range d.data {
+			go d.ping(site, false)
+		}
+	}
+}
+
+func (d *PingsData) ping(url string, wgON bool) {
 	// используем ping cmd/терминала, 1 раз
 	output, err := exec.Command("ping", "-c", "1", url).CombinedOutput()
 
@@ -202,7 +204,9 @@ func (d *PingsData) ping(url string) {
 			Error: err,
 		}
 		d.lock.Unlock()
-		d.wg.Done()
+		if wgON {
+			d.wg.Done()
+		}
 		return
 	}
 
@@ -220,5 +224,7 @@ func (d *PingsData) ping(url string) {
 		Error: err,
 	}
 	d.lock.Unlock()
-	d.wg.Done()
+	if wgON {
+		d.wg.Done()
+	}
 }
