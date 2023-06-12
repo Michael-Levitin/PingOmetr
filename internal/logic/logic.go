@@ -23,7 +23,7 @@ const (
 )
 
 type PingLogic struct {
-	db *PingsData // TODO - change to db
+	db *PingsData
 }
 
 type PingsData struct {
@@ -65,6 +65,9 @@ func (l PingLogic) GetFastest(ctx context.Context) (*ob.PingUser, error) {
 	l.db.lock.RLock()
 	user := l.db.fastest
 	l.db.lock.RUnlock()
+	l.db.lock.Lock()
+	l.db.admin.Fastest++
+	l.db.lock.Unlock()
 	return &user, nil
 }
 
@@ -72,6 +75,9 @@ func (l PingLogic) GetSlowest(ctx context.Context) (*ob.PingUser, error) {
 	l.db.lock.RLock()
 	user := l.db.slowest
 	l.db.lock.RUnlock()
+	l.db.lock.Lock()
+	l.db.admin.Slowest++
+	l.db.lock.Unlock()
 	return &user, nil
 }
 
@@ -79,6 +85,9 @@ func (l PingLogic) GetSpecific(ctx context.Context, site string) (*ob.PingUser, 
 	l.db.lock.RLock()
 	user := l.db.data[site]
 	l.db.lock.RUnlock()
+	l.db.lock.Lock()
+	l.db.admin.Specific++
+	l.db.lock.Unlock()
 	return &user, nil
 }
 
@@ -136,8 +145,8 @@ func (d *PingsData) setAdminData() error {
 	}
 
 	d.admin = ob.PingAdmin{
-		Min:      int32(adminI[0]),
-		Max:      int32(adminI[1]),
+		Slowest:  int32(adminI[0]),
+		Fastest:  int32(adminI[1]),
 		Specific: int32(adminI[2]),
 	}
 	return nil
@@ -146,7 +155,7 @@ func (d *PingsData) setAdminData() error {
 func (d *PingsData) updateAdminDataDB() {
 	for {
 		time.Sleep(time.Second * adminDataUpdateCoolDown)
-		d1 := []byte(fmt.Sprintf("%d %d %d", d.admin.Max, d.admin.Min, d.admin.Specific))
+		d1 := []byte(fmt.Sprintf("%d %d %d", d.admin.Fastest, d.admin.Slowest, d.admin.Specific))
 		err := os.WriteFile("./../../internal/logic/db/admin.txt", d1, 0644)
 		if err != nil {
 			log.Print("logic: failed updating admin db", err)

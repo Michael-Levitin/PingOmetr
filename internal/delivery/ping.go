@@ -44,5 +44,5 @@ func (p *PingServer) GetAdminData(ctx context.Context, in *pb.GetAdminDataReques
 	if err != nil {
 		return nil, err
 	}
-	return &pb.GetAdminDataResponse{Max: out.Max, Min: out.Min, Specific: out.Specific}, nil
+	return &pb.GetAdminDataResponse{Max: out.Fastest, Min: out.Slowest, Specific: out.Specific}, nil
 }

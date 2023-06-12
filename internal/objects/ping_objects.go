@@ -7,7 +7,7 @@ type PingUser struct {
 }
 
 type PingAdmin struct {
-	Min      int32
-	Max      int32
+	Slowest  int32
+	Fastest  int32
 	Specific int32
 }
