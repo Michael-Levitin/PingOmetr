@@ -84,7 +84,10 @@ func (l PingLogic) GetSlowest(ctx context.Context) (*ob.PingUser, error) {
 
 func (l PingLogic) GetSpecific(ctx context.Context, site string) (*ob.PingUser, error) {
 	l.db.lock.RLock()
-	user := l.db.data[site]
+	user, exist := l.db.data[site]
+	if !exist {
+		return nil, fmt.Errorf("site is not on the list")
+	}
 	l.db.lock.RUnlock()
 
 	l.db.lock.Lock()
