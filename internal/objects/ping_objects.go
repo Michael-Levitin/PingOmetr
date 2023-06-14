@@ -3,11 +3,11 @@ package objects
 type PingUser struct {
 	Msec  int32
 	Site  string
-	Error error
+	Error string
 }
 
 type PingAdmin struct {
-	Slowest  int32
-	Fastest  int32
-	Specific int32
+	Slowest  int64
+	Fastest  int64
+	Specific int64
 }

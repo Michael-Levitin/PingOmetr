@@ -20,7 +20,7 @@ func (p *PingServer) GetFastest(ctx context.Context, in *pb.GetFastestRequest) (
 	if err != nil {
 		return nil, err
 	}
-	return &pb.GetResponse{Ping: out.Msec, Site: out.Site, Error: out.Error.Error()}, nil
+	return &pb.GetResponse{Ping: out.Msec, Site: out.Site, Error: out.Error}, nil
 }
 
 func (p *PingServer) GetSlowest(ctx context.Context, in *pb.GetSlowestRequest) (*pb.GetResponse, error) {
@@ -28,7 +28,7 @@ func (p *PingServer) GetSlowest(ctx context.Context, in *pb.GetSlowestRequest) (
 	if err != nil {
 		return nil, err
 	}
-	return &pb.GetResponse{Ping: out.Msec, Site: out.Site, Error: out.Error.Error()}, nil
+	return &pb.GetResponse{Ping: out.Msec, Site: out.Site, Error: out.Error}, nil
 }
 
 func (p *PingServer) GetSpecific(ctx context.Context, in *pb.GetSpecificRequest) (*pb.GetResponse, error) {
@@ -36,7 +36,7 @@ func (p *PingServer) GetSpecific(ctx context.Context, in *pb.GetSpecificRequest)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.GetResponse{Ping: out.Msec, Site: out.Site, Error: out.Error.Error()}, nil
+	return &pb.GetResponse{Ping: out.Msec, Site: out.Site, Error: out.Error}, nil
 }
 
 func (p *PingServer) GetAdminData(ctx context.Context, in *pb.GetAdminDataRequest) (*pb.GetAdminDataResponse, error) {

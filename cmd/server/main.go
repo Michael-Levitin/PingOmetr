@@ -36,10 +36,9 @@ func main() {
 
 	pingServer := delivery.NewPingServer(*pingLogic)   // ... а логику в библиотеку
 	pb.RegisterPingOmetrServer(grpcServer, pingServer) // регистрируем сервис библиотеки в grpc
-
+	log.Println("server is running")
 	if err = grpcServer.Serve(lis); err != nil { // передаем полученные от клиента данные
 		log.Println("server: error serving grpc: ", err)
 		os.Exit(1)
 	}
-	log.Println("server is running")
 }

@@ -35,7 +35,7 @@ type PingsData struct {
 	admin   ob.PingAdmin
 }
 
-// NewPingLogic() создаем новую логику, подключаем список сайтов, обновление пингов/админа, ...
+// NewPingLogic - создаем новую логику, подключаем список сайтов, обновление пингов/админа, ...
 func NewPingLogic() (*PingLogic, error) {
 	var err error
 	db := PingsData{wg: &sync.WaitGroup{}, lock: sync.RWMutex{}}
@@ -55,6 +55,7 @@ func NewPingLogic() (*PingLogic, error) {
 
 	go db.updateAdminDataDB() // периодическое обновление данных для админов, на диске
 	go db.updateUserData()    // периодическое обновление данных ping
+	defer db.updateAdminDataDBOnce()
 
 	return &PingLogic{&db}, nil
 }
@@ -143,20 +144,20 @@ func (d *PingsData) setFastSlowData() {
 	fast := ob.PingUser{
 		Msec:  10000,
 		Site:  "",
-		Error: nil,
+		Error: "",
 	}
 	slow := ob.PingUser{
 		Msec:  0,
 		Site:  "",
-		Error: nil,
+		Error: "",
 	}
 
 	d.lock.RLock()
 	for _, user := range d.data {
-		if user.Error == nil && user.Msec < fast.Msec {
+		if user.Error == "" && user.Msec < fast.Msec {
 			fast = user
 		}
-		if user.Error == nil && user.Msec > slow.Msec {
+		if user.Error == "" && user.Msec > slow.Msec {
 			slow = user
 		}
 	}
@@ -190,9 +191,9 @@ func (d *PingsData) setAdminData() error {
 	}
 
 	d.admin = ob.PingAdmin{
-		Slowest:  int32(adminI[0]),
-		Fastest:  int32(adminI[1]),
-		Specific: int32(adminI[2]),
+		Slowest:  int64(adminI[0]),
+		Fastest:  int64(adminI[1]),
+		Specific: int64(adminI[2]),
 	}
 	return nil
 }
@@ -201,11 +202,15 @@ func (d *PingsData) setAdminData() error {
 func (d *PingsData) updateAdminDataDB() {
 	for {
 		time.Sleep(time.Second * adminDataUpdateCoolDown)
-		d1 := []byte(fmt.Sprintf("%d %d %d", d.admin.Fastest, d.admin.Slowest, d.admin.Specific))
-		err := os.WriteFile("./../../internal/logic/db/admin.txt", d1, 0644)
-		if err != nil {
-			log.Print("logic: failed updating admin db", err)
-		}
+		d.updateAdminDataDBOnce()
+	}
+}
+
+func (d *PingsData) updateAdminDataDBOnce() {
+	d1 := []byte(fmt.Sprintf("%d %d %d", d.admin.Fastest, d.admin.Slowest, d.admin.Specific))
+	err := os.WriteFile("./../../internal/logic/db/admin.txt", d1, 0644)
+	if err != nil {
+		log.Print("logic: failed updating admin db", err)
 	}
 }
 
@@ -230,22 +235,22 @@ func (d *PingsData) ping(url string) {
 		err = fmt.Errorf("regex error")
 	}
 
+	var errString string
 	if err != nil {
 		switch err.Error() {
 		case "exit status 2":
-			err = fmt.Errorf("no address associated with hostname")
+			errString = "no address associated with hostname"
 		case "exit status 1":
-			err = fmt.Errorf("no reply from host - timeout")
+			errString = "no reply from host - timeout"
 		}
 		d.lock.Lock()
 		d.data[url] = ob.PingUser{
 			Msec:  0,
 			Site:  url,
-			Error: err,
+			Error: errString,
 		}
 		d.lock.Unlock()
 		d.wg.Done()
-
 		return
 	}
 
@@ -254,11 +259,15 @@ func (d *PingsData) ping(url string) {
 		ping++
 	}
 
+	if err != nil {
+		errString = err.Error()
+	}
+
 	d.lock.Lock()
 	d.data[url] = ob.PingUser{
 		Msec:  int32(ping),
 		Site:  url,
-		Error: err,
+		Error: errString,
 	}
 	d.lock.Unlock()
 	d.wg.Done()
