@@ -37,21 +37,24 @@ func main() {
 func pingDialer(s *[]string, grpcClient pb.PingOmetrClient) {
 	sel := [3]string{"Fast", "Slow", "Specific"}
 	for {
-		selector := sel[randInt(len(sel))]
-		siteRes := &pb.GetResponse{}
-		var err error
-		switch selector {
-		case "Fast":
-			siteRes, err = grpcClient.GetFastest(context.TODO(), &pb.GetFastestRequest{})
-		case "Slow":
-			siteRes, err = grpcClient.GetSlowest(context.TODO(), &pb.GetSlowestRequest{})
-		case "Specific":
-			site := (*s)[randInt(len((*s)))]
-			siteRes, err = grpcClient.GetSpecific(context.TODO(), &pb.GetSpecificRequest{
-				SiteName: site,
-			})
-		}
-		log.Println(selector, siteRes, err)
+		go func() {
+			selector := sel[randInt(len(sel))]
+			siteRes := &pb.GetResponse{}
+			var err error
+			switch selector {
+			case "Fast":
+				siteRes, err = grpcClient.GetFastest(context.TODO(), &pb.GetFastestRequest{})
+			case "Slow":
+				siteRes, err = grpcClient.GetSlowest(context.TODO(), &pb.GetSlowestRequest{})
+			case "Specific":
+				site := (*s)[randInt(len((*s)))]
+				siteRes, err = grpcClient.GetSpecific(context.TODO(), &pb.GetSpecificRequest{
+					SiteName: site,
+				})
+			}
+			log.Println(selector, siteRes, err)
+		}()
+
 	}
 }
 
